@@ -1,0 +1,15 @@
+{
+  "name": "p",
+  "version": "0.0.0",
+  "description": "My Promise implementation",
+  "main": "promise.js",
+  "scripts": {
+    "test": "mocha test"
+  },
+  "author": "Lucas Vieira <vieiralucas4@gmail.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "chai": "^4.0.0",
+    "mocha": "^3.4.2"
+  }
+}
