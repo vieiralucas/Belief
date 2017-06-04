@@ -471,7 +471,7 @@ describe('A Belief', () => {
     })
   })
 
-  it('real world', done => {
+  it('works fine with a more real world example', done => {
     const heroes = [
       { id: 1, name: 'Batman' },
       { id: 2, name: 'Spiderman' },
@@ -508,14 +508,10 @@ describe('A Belief', () => {
         return fetchVillain(hero.id)
           .then(villain => {
             hero.villain = villain.name
-
-            console.log('inside map inside then', hero)
             return hero
           })
           .catch(err => {
-            console.log('inside map inside catch', hero)
             hero.villain = err.message
-
             return hero
           })
       })
