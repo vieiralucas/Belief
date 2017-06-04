@@ -1,6 +1,6 @@
 {
   "name": "Belief",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "description": "Belief is a demo Promise implementation",
   "main": "belief.js",
   "scripts": {
