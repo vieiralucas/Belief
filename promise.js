@@ -1,85 +1,64 @@
-function Promise (fn) {
+function Promise(fn) {
   this.state = 'pending'
+
   this.onFulfills = []
   this.onRejections = []
 
   const resolve = value => {
-    if (this.state === 'pending') {
-      this.state = 'fulfilled'
-      this.value = value
-
-      this.onFulfills.forEach(onFulfill => {
-        const nextValue = onFulfill.fn(this.value)
-        if (nextValue && typeof nextValue.then === 'function') {
-          nextValue.then(onFulfill.resolve)
-        } else {
-          onFulfill.resolve(nextValue)
-        }
-      })
+    if (this.state !== 'pending') {
+      return
     }
+
+    this.state = 'fulfilled'
+    this.value = value
+    this.onFulfills.forEach(this._doResolve.bind(this))
   }
 
   const reject = reason => {
-    if (this.state === 'pending') {
-      this.state = 'rejected'
-      this.value = reason
+    if (this.state !== 'pending')
+      return
 
-      this.onRejections.forEach(onRejection => {
-        const nextValue = onRejection.fn(this.value)
-        if (nextValue && typeof nextValue.then === 'function') {
-          nextValue.then(onRejection.resolve, onRejection.reject)
-        } else {
-          onRejection.resolve(nextValue)
-        }
-      })
-    }
+    this.state = 'rejected'
+    this.value = reason
+    this.onRejections.forEach(this._doResolve.bind(this))
   }
 
-  setTimeout(() => {
+  if (typeof fn === 'function')
     fn(resolve, reject)
-  }, 0)
 }
 
-Promise.prototype.then = function then(onFulfilled, onRejection) {
-  const returnPromise = new Promise((resolve, reject) => {
-    if (this.state === 'fulfilled') {
-      if (typeof onFulfilled === 'function') {
-        const nextValue = onFulfilled(this.value)
-        if (nextValue && typeof nextValue.then === 'function') {
-          nextValue.then(resolve, reject)
-        } else {
-          resolve(nextValue)
-        }
-      } else {
-        resolve(this.value)
-      }
-    } else if (this.state === 'rejected') {
-      if (typeof onRejection === 'function') {
-        const nextValue = onRejection(this.value)
+Promise.prototype._doResolve = function doResolve({ fn, resolve, reject }) {
+  const result = fn(this.value)
 
-        if (nextValue && typeof nextValue.then === 'function') {
-          nextValue.then(resolve, reject)
-        } else {
-          resolve(nextValue)
-        }
-      } else {
-        reject(this.value)
-      }
-    } else {
-      this.onFulfills.push({ fn: onFulfilled || new Function(), resolve, reject })
-      this.onRejections.push({ fn: onRejection || new Function(), resolve, reject })
+  if (result && typeof result.then === 'function') {
+    result.then(resolve, reject)
+  } else {
+    resolve(result)
+  }
+}
+
+Promise.prototype.then = function then(onFulfill, onRejection) {
+  onFulfill = onFulfill || (() => this.value)
+  onRejection = onRejection || (() => Promise.reject(this.value))
+
+  return new Promise((resolve, reject) => {
+    if (this.state === 'fulfilled') {
+      this._doResolve({ fn: onFulfill, resolve, reject })
+    } else if(this.state === 'rejected') {
+      this._doResolve({ fn: onRejection, resolve, reject })
+    } else if (this.state === 'pending') {
+      this.onFulfills.push({ fn: onFulfill, resolve, reject })
+      this.onRejections.push({ fn: onRejection, resolve, reject })
     }
   })
-
-  return returnPromise
 }
 
-Promise.prototype.catch = function _catch(onRejection) {
+Promise.prototype.map = function map(onFulfill) {
+  return this.then(values => Promise.all(values.map(onFulfill)))
+}
+
+Promise.prototype.catch = function katch(onRejection) {
   return this.then(undefined, onRejection)
-}
-
-Promise.prototype.map = function map(mapper) {
-  return this.then(values => Promise.all(values.map(mapper)))
 }
 
 Promise.resolve = function resolve(value) {
@@ -95,30 +74,32 @@ Promise.reject = function reject(reason) {
 }
 
 Promise.all = function all(promises) {
-  const returnedPromise = new Promise((resolve, reject) => {
-    const values = []
+  return new Promise((resolve, reject) => {
     let count = 0
+    const values = []
+    const waitOnValue = value => {
+      if (value && typeof value.then === 'function') {
+        value
+          .catch(reject)
+          .then(v => {
+            count++
+            values.push(v)
+            if (values.length === promises.length) {
+              resolve(values)
+            }
+          })
+        return
+      }
 
-    const check = i => value => {
-      values[i] = value
       count++
-      if (count === promises.length) {
+      values.push(value)
+      if (values.length === promises.length) {
         resolve(values)
       }
     }
 
-    for (let i = 0; i < promises.length; i++) {
-      const promise = promises[i]
-      if (typeof promise.then === 'function') {
-        promise.then(check(i), reject)
-      } else {
-        check(i)(promise)
-      }
-    }
-
+    promises.forEach(waitOnValue)
   })
-
-  return returnedPromise
 }
 
 module.exports = Promise

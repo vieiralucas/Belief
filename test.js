@@ -3,44 +3,48 @@ const { expect } = require('chai')
 const Promise = require('./promise')
 
 describe('A Promise', () => {
-  it('can be fulfilled', () => {
+  it('can be fulfilled', done => {
     const p = new Promise(resolve => {
       resolve(2)
     })
 
     setTimeout(() => {
       expect(p).to.have.property('state').equal('fulfilled')
+      done()
     }, 0)
   })
 
-  it('can be rejected', () => {
+  it('can be rejected', done => {
     const p = new Promise((resolve, reject) => {
       reject(new Error('rejected'))
     })
 
     setTimeout(() => {
       expect(p).to.have.property('state').equal('rejected')
+      done()
     }, 0)
   })
 
-  it('has a static .resolve method which returns a fulfilled promise', () => {
+  it('has a static .resolve method which returns a fulfilled promise', done => {
     const p = Promise.resolve(2)
 
     setTimeout(() => {
       expect(p).to.have.property('state').equal('fulfilled')
+      done()
     }, 0)
   })
 
-  it('has a static .reject method which returns a rejected promise', () => {
+  it('has a static .reject method which returns a rejected promise', done => {
     const p = Promise.reject(2)
 
     setTimeout(() => {
       expect(p).to.have.property('state').equal('rejected')
+      done()
     }, 0)
   })
 
   describe('when fulfilled', () => {
-    it('cannot be rejected', () => {
+    it('cannot be rejected', done => {
       const p = new Promise((resolve, reject) => {
         resolve(2)
         reject(new Error('rejected'))
@@ -48,12 +52,13 @@ describe('A Promise', () => {
 
       setTimeout(() => {
         expect(p).to.have.property('state').equal('fulfilled')
+        done()
       }, 0)
     })
   })
 
   describe('when rejected', () => {
-    it('cannot be fulfilled', () => {
+    it('cannot be fulfilled', done => {
       const p = new Promise((resolve, reject) => {
         reject(new Error('rejected'))
         resolve(2)
@@ -61,6 +66,7 @@ describe('A Promise', () => {
 
       setTimeout(() => {
         expect(p).to.have.property('state').equal('rejected')
+        done()
       }, 0)
     })
   })
@@ -362,21 +368,21 @@ describe('A Promise', () => {
             done()
           })
       })
+
+      it('chains correctly when catch in the middle', done => {
+        Promise.resolve(1)
+          .then(() => Promise.resolve(2))
+          .catch(() => Promise.resolve(4))
+          .then(two => {
+            expect(two).to.equal(2)
+            done()
+          })
+      })
     })
   })
 
-  it.skip('chains correctly when catch in the middle', done => {
-    Promise.resolve(1)
-      .then(() => Promise.resolve(2))
-      .catch(() => Promise.resolve(4))
-      .then(two => {
-        expect(two).to.equal(2)
-        done()
-      })
-  })
-
   describe('has a static .all method', () => {
-    it('resolves array of promises to an array of values', done => {
+    it('that resolves array of promises to an array of values', done => {
       const ps = Promise.all([Promise.resolve(1), Promise.resolve(2)])
 
       ps
@@ -465,7 +471,7 @@ describe('A Promise', () => {
     })
   })
 
-  it.skip('real world', done => {
+  it('real world', done => {
     const heroes = [
       { id: 1, name: 'Batman' },
       { id: 2, name: 'Spiderman' },
@@ -514,11 +520,10 @@ describe('A Promise', () => {
           })
       })
       .then(heroesWithVillain => {
-        console.trace()
-        expect(heroesWithVillain).to.be.deep.equal([
+        expect(heroesWithVillain).to.be.same.deep.members([
           { id: 1, name: 'Batman', villain: 'The Joker' },
-          { id: 1, name: 'Spiderman', villain: 'Green Goblin' },
-          { id: 1, name: 'Thor', villain: 'Loki' },
+          { id: 2, name: 'Spiderman', villain: 'Green Goblin' },
+          { id: 3, name: 'Thor', villain: 'Loki' },
           { id: 4, name: 'Superman', villain: 'Network error' },
         ])
         done()
