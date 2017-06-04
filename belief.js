@@ -1,4 +1,4 @@
-function Promise(fn) {
+function Belief(fn) {
   this.state = 'pending'
 
   this.onFulfills = []
@@ -27,7 +27,7 @@ function Promise(fn) {
     fn(resolve, reject)
 }
 
-Promise.prototype._doResolve = function doResolve({ fn, resolve, reject }) {
+Belief.prototype._doResolve = function doResolve({ fn, resolve, reject }) {
   const result = fn(this.value)
 
   if (result && typeof result.then === 'function') {
@@ -37,11 +37,11 @@ Promise.prototype._doResolve = function doResolve({ fn, resolve, reject }) {
   }
 }
 
-Promise.prototype.then = function then(onFulfill, onRejection) {
+Belief.prototype.then = function then(onFulfill, onRejection) {
   onFulfill = onFulfill || (() => this.value)
-  onRejection = onRejection || (() => Promise.reject(this.value))
+  onRejection = onRejection || (() => Belief.reject(this.value))
 
-  return new Promise((resolve, reject) => {
+  return new Belief((resolve, reject) => {
     if (this.state === 'fulfilled') {
       this._doResolve({ fn: onFulfill, resolve, reject })
     } else if(this.state === 'rejected') {
@@ -53,28 +53,28 @@ Promise.prototype.then = function then(onFulfill, onRejection) {
   })
 }
 
-Promise.prototype.map = function map(onFulfill) {
-  return this.then(values => Promise.all(values.map(onFulfill)))
+Belief.prototype.map = function map(onFulfill) {
+  return this.then(values => Belief.all(values.map(onFulfill)))
 }
 
-Promise.prototype.catch = function katch(onRejection) {
+Belief.prototype.catch = function katch(onRejection) {
   return this.then(undefined, onRejection)
 }
 
-Promise.resolve = function resolve(value) {
-  return new Promise(resolve => {
+Belief.resolve = function resolve(value) {
+  return new Belief(resolve => {
     resolve(value)
   })
 }
 
-Promise.reject = function reject(reason) {
-  return new Promise((resolve, reject) => {
+Belief.reject = function reject(reason) {
+  return new Belief((resolve, reject) => {
     reject(reason)
   })
 }
 
-Promise.all = function all(promises) {
-  return new Promise((resolve, reject) => {
+Belief.all = function all(promises) {
+  return new Belief((resolve, reject) => {
     let count = 0
     const values = []
     const waitOnValue = value => {
@@ -102,4 +102,4 @@ Promise.all = function all(promises) {
   })
 }
 
-module.exports = Promise
+module.exports = Belief

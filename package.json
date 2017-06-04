@@ -1,8 +1,8 @@
 {
-  "name": "p",
+  "name": "Belief",
   "version": "0.0.0",
-  "description": "My Promise implementation",
-  "main": "promise.js",
+  "description": "Belief is a demo Promise implementation",
+  "main": "belief.js",
   "scripts": {
     "test": "mocha test"
   },
